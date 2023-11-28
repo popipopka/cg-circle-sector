@@ -12,28 +12,29 @@ public class Rasterization {
 
     public static void drawSector(final GraphicsContext graphicsContext,
                                   final int x0, final int y0,
-                                  double angle1, double angle2,
-                                  final double radius) {
+                                  final double angle1, final double angle2,
+                                  final double r,
+                                  Color start, Color end) {
         PixelWriter writer = graphicsContext.getPixelWriter();
 
-        double minAngle = Math.min(angle1, angle2);
-        double maxAngle = Math.max(angle1, angle2);
+        final double minAngle = Math.min(angle1, angle2);
+        final double maxAngle = Math.max(angle1, angle2);
 
         int xLeft;
         int xRight;
         double sqrt;
         boolean isBelongsToSector;
-        for (int y = (int) (y0 - radius + 1); y < (int) (y0 + radius); y++) {
-            sqrt = Math.round(Math.sqrt(Math.pow(radius, 2) - Math.pow((y - y0), 2)));
+        for (int y = (int) (y0 - r + 1); y < (int) (y0 + r); y++) {
+            sqrt = Math.round(Math.sqrt(Math.pow(r, 2) - Math.pow((y - y0), 2)));
 
             xLeft = (int) (x0 - sqrt);
             xRight = (int) (x0 + sqrt);
 
             for (int x = xLeft; x <= xRight; x++) {
-                isBelongsToSector = belongsToSector(minAngle, maxAngle, x0, y0, x, y, radius);
+                isBelongsToSector = belongsToSector(minAngle, maxAngle, x0, y0, x, y, r);
 
                 if (isBelongsToSector) {
-                    writer.setColor(x, y, Color.BLACK);
+                    writer.setColor(x, y, interpolateColor(start, end, r, x0, y0, x, y));
                 }
             }
         }
@@ -51,7 +52,25 @@ public class Rasterization {
         return minAngle <= angle && angle <= maxAngle && r <= radius;
     }
 
-    private static double distanceBetweenPoints(int x0, int y0, int x, int y) {
-        return Math.sqrt(Math.pow((x - x0), 2) + Math.pow((y - y0), 2));
+    private static double distanceBetweenPoints(int x1, int y1, int x2, int y2) {
+        return Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+    }
+
+    public static Color interpolateColor(Color c1, Color c2, double radius, int x0, int y0, int x, int y) {
+        double r1 = c1.getRed();
+        double g1 = c1.getGreen();
+        double b1 = c1.getBlue();
+
+        double r2 = c2.getRed();
+        double g2 = c2.getGreen();
+        double b2 = c2.getBlue();
+
+        double ratio = distanceBetweenPoints(x0, y0, x, y) / radius;
+
+        double r = r1 * (1 - ratio) + r2 * ratio;
+        double g = g1 * (1 - ratio) + g2 * ratio;
+        double b = b1 * (1 - ratio) + b2 * ratio;
+
+        return new Color(r, g, b, 1.0);
     }
 }
