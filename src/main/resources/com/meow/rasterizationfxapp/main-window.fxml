@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.canvas.Canvas?>
 
-<AnchorPane fx:id="anchorPane" xmlns:fx="http://javafx.com/fxml"
+<AnchorPane fx:id="anchorPane" xmlns:fx="http://javafx.com/fxml" style="-fx-background-color: #000000;"
             fx:controller="com.meow.rasterizationfxapp.RasterizationController">
-    <Canvas fx:id="canvas" width="800" height="600" AnchorPane.topAnchor="30.0"/>
+    <Canvas fx:id="canvas" width="1366" height="720" AnchorPane.topAnchor="30.0"/>
 </AnchorPane>
