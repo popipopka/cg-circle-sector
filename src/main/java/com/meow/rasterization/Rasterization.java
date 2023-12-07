@@ -17,20 +17,42 @@ public class Rasterization {
                                   Color c1, Color c2) {
         PixelWriter writer = graphicsContext.getPixelWriter();
 
-        double minAngle = simplifyAngle(Math.min(angle1, angle2));
-        double maxAngle = simplifyAngle(Math.max(angle1, angle2));
+        double minAngle;
+        double maxAngle;
+
+        if (Math.abs(angle2) >= Math.abs(angle1)) {
+            minAngle = angle1;
+            maxAngle = angle2;
+        } else {
+            minAngle = angle2;
+            maxAngle = angle1;
+        }
+
+        boolean isBig = Math.abs(maxAngle) > 360;
+
+        minAngle = simplifyAngle(minAngle);
+        if(maxAngle % 360 == 0) {
+            maxAngle = 360;
+        } else maxAngle = simplifyAngle(maxAngle);
+
+        double temp = Math.min(minAngle, maxAngle);
+        maxAngle = Math.max(minAngle, maxAngle);
+        minAngle = temp;
 
         int xLeft;
         int xRight;
         double sqrt;
-        for (int y = (int) (y0 - r + 1); y < (int) (y0 + r); y++) {
+        for (
+                int y = (int) (y0 - r + 1); y < (int) (y0 + r); y++) {
             sqrt = Math.round(Math.sqrt(Math.pow(r, 2) - Math.pow((y - y0), 2)));
 
             xLeft = (int) (x0 - sqrt);
             xRight = (int) (x0 + sqrt);
 
             for (int x = xLeft; x <= xRight; x++) {
-                if (belongsToSector(minAngle, maxAngle, x0, y0, x, y, r)) {
+                if (!isBig && belongsToSector(minAngle, maxAngle, x0, y0, x, y, r)) {
+                    writer.setColor(x, y, interpolateColor(c1, c2, r, x0, y0, x, y));
+                } else if (isBig && !belongsToSector(minAngle, maxAngle, x0, y0, x, y, r)) {
                     writer.setColor(x, y, interpolateColor(c1, c2, r, x0, y0, x, y));
                 }
             }
@@ -42,16 +64,17 @@ public class Rasterization {
     }
 
     private static double simplifyAngle(double angle) {
-        if (angle != 0 && angle % 360 == 0) return 360;
-
-        return (angle + 360) % 360;
+        angle = (angle + 360) % 360;
+        if (angle < 0) angle += 360;
+        return angle;
     }
 
-    private static boolean belongsToSector(double minAngle, double maxAngle, int x0, int y0, int x, int y, double radius) {
+    private static boolean belongsToSector(double minAngle, double maxAngle, int x0, int y0, int x, int y,
+                                           double radius) {
         double r = distanceBetweenPoints(x0, y0, x, y);
         double angle = mirrorAngleByOy(Math.toDegrees(Math.atan2((y - y0), (x - x0))));
 
-        return minAngle <= angle && angle <= maxAngle && r <= radius;
+        return minAngle <= angle && angle <= maxAngle && r <= radius + 1;
     }
 
     private static double distanceBetweenPoints(int x1, int y1, int x2, int y2) {
